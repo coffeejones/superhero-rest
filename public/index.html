@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17263b">
+    <meta name="description" content="Et samlet katalog over superhelte. Find en helt, og gem dine favoritter med en note.">
+    <title>Superhold · Heltekatalog</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#catalog">Gå til kataloget</a>
+    <header class="site-header">
+      <div class="header-inner page-width">
+        <a class="brand" href="/" aria-label="Superhold, forsiden">
+          <svg class="brand-symbol" aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M2 2h10v10H2zM16 2h10v10H16zM2 16h10v10H2z" fill="currentColor"/><path d="M16 16h10v10H16z" stroke="currentColor" stroke-width="2"/></svg>
+          <span>SUPERHOLD<span class="brand-caption">Katalog & favoritter</span></span>
+        </a>
+        <nav class="main-nav" aria-label="Sektioner">
+          <a href="#catalog">Katalog</a>
+          <a href="#favorites">Favoritter <span id="nav-favorite-count" class="nav-count">0</span></a>
+        </nav>
+        <div class="header-tools">
+          <span class="connection"><span id="connection-dot" class="connection-dot"></span><span id="connection-label">Henter data…</span></span>
+          <button id="refresh-button" class="refresh-button" type="button" aria-label="Opdater data">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg>
+            <span>Opdater</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main class="page-width">
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <h1 id="page-title">Heltekatalog</h1>
+          <p class="page-description">Find superhelte, og gem dine favoritter med en note.</p>
+        </div>
+        <div class="archive-total"><strong id="hero-total">—</strong><span>superhelte</span></div>
+      </section>
+      <div class="workspace">
+        <section id="catalog" class="catalog" aria-labelledby="catalog-title">
+          <div class="catalog-heading">
+            <h2 id="catalog-title" tabindex="-1">Alle superhelte</h2>
+            <span id="result-count" class="result-count" aria-live="polite">Henter helte…</span>
+          </div>
+          <div class="catalog-toolbar">
+            <label class="search-field">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+              <span class="sr-only">Søg på navn eller identitet</span>
+              <input id="hero-search" type="search" placeholder="Søg efter en helt…" autocomplete="off">
+            </label>
+            <label class="sort-field"><span class="sr-only">Sortér helte</span><select id="hero-sort"><option value="name">Navn A–Å</option><option value="strength">Højeste styrke</option></select></label>
+          </div>
+          <div class="catalog-columns" aria-hidden="true"><span></span><span>Superhelt</span><span class="identity-column">Identitet</span><span>Styrke</span><span class="save-column">Favorit</span></div>
+          <div id="hero-list" class="hero-list" aria-busy="true"></div>
+          <p id="catalog-message" class="empty-state">Henter superhelte…</p>
+          <div id="catalog-pagination" class="catalog-pagination" hidden>
+            <span id="catalog-range" class="catalog-range"></span>
+            <div class="pagination-controls">
+              <button id="previous-page" class="page-button" type="button" aria-label="Forrige side"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m14 6-6 6 6 6"/></svg></button>
+              <span id="page-number" class="page-number"></span>
+              <button id="next-page" class="page-button" type="button" aria-label="Næste side"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m10 6 6 6-6 6"/></svg></button>
+            </div>
+          </div>
+        </section>
+        <aside id="favorites" class="favorites-panel" aria-labelledby="favorites-title">
+          <div class="favorites-heading">
+            <div class="favorites-title-row"><h2 id="favorites-title" tabindex="-1">Favoritter</h2><span id="favorite-badge" class="favorite-count">0</span></div>
+            <p>Dine gemte helte og noter.</p>
+          </div>
+          <div id="favorite-list" class="favorite-list" aria-busy="true"></div>
+          <div id="favorites-message" class="favorites-empty">
+            <svg aria-hidden="true" width="32" height="40" viewBox="0 0 24 30" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 2h16v25l-8-5-8 5V2Z"/><path d="M8 9h8M8 13h8"/></svg>
+            <h3>Ingen favoritter endnu</h3>
+            <p>Gem en helt fra kataloget, og tilføj en note.</p>
+          </div>
+          <div class="favorites-footer"><span id="last-sync">Afventer synkronisering</span><p>Listen deles på denne server og nulstilles ved genstart.</p></div>
+        </aside>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+    </main>
+    <footer class="site-footer page-width"><span>Superhold</span><a href="https://akabab.github.io/superhero-api/" target="_blank" rel="noopener noreferrer">Data fra SuperHero API <span aria-hidden="true">↗</span></a></footer>
+    <dialog id="favorite-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <form id="favorite-form">
+        <div class="dialog-top"><p class="dialog-label" id="dialog-eyebrow">Gem favorit</p><button id="close-dialog" type="button" class="close-button" aria-label="Luk dialog">×</button></div>
+        <h2 id="dialog-title">Tilføj en favorit</h2>
+        <p id="dialog-description">Tilføj en note til helten.</p>
+        <label for="favorite-note">Din note</label>
+        <textarea id="favorite-note" name="note" minlength="2" maxlength="500" rows="4" required placeholder="Hvad vil du huske om denne helt?" aria-describedby="note-help"></textarea>
+        <p id="note-help" class="note-help">2–500 tegn</p>
+        <p id="dialog-error" class="dialog-error" role="alert"></p>
+        <button id="save-favorite" class="primary-button" type="submit">Gem favorit</button>
+      </form>
+    </dialog>
+  </body>
+</html>

@@ -1,0 +1,573 @@
+{
+  "info": {
+    "name": "SuperHero REST · CRUD og validering",
+    "description": "Kør requests i rækkefølge med Collection Runner eller npm run test:postman. Første request finder test-ID ud fra de aktuelle API-data. Collectionen fjerner først en eventuel favorit med dette ID og sletter sin testfavorit til sidst. Brug en testserver: en eksisterende note for dette ID genskabes ikke. Ingen øvrige favoritter ændres. SuperHero API skal være tilgængeligt.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 · Hent alle superhelte",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/superheroes"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const heroes = pm.response.json();",
+              "pm.test(\"Listen indeholder kun de fem krævede felter\", () => {",
+              "  pm.expect(heroes).to.be.an(\"array\").that.is.not.empty;",
+              "  heroes.forEach(hero => {",
+              "    pm.expect(hero).to.have.all.keys(\"id\", \"name\", \"fullName\", \"strength\", \"image\");",
+              "    pm.expect(hero.id).to.be.a(\"number\");",
+              "    pm.expect(hero.name).to.be.a(\"string\");",
+              "    pm.expect(hero.fullName).to.be.a(\"string\");",
+              "    pm.expect(hero.strength === null || typeof hero.strength === \"number\").to.equal(true);",
+              "    pm.expect(hero.image).to.be.a(\"string\");",
+              "  });",
+              "});",
+              "if (Array.isArray(heroes) && heroes.length) {",
+              "  pm.collectionVariables.set(\"heroId\", heroes[0].id);",
+              "  pm.collectionVariables.set(\"selectedHero\", JSON.stringify(heroes[0]));",
+              "  pm.collectionVariables.set(\"missingHeroId\", Math.max(...heroes.map(hero => hero.id)) + 1);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Hent den valgte superhelt",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/superheroes/{{heroId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Den korrekte superhelt returneres\", () => {",
+              "  pm.expect(pm.response.json()).to.deep.equal(JSON.parse(pm.collectionVariables.get(\"selectedHero\")));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Ukendt superhelt giver 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/superheroes/{{missingHeroId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Klargør favorit til testen",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/favorites/{{heroId}}",
+        "description": "Fjerner en eventuel eksisterende favorit for den først returnerede superhelt. Kør mod en testserver: denne request ændrer serverens favoritter."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Favoritten er fjernet eller fandtes ikke\", () => {",
+              "  pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Manglende note giver 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{heroId}}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · ID som tekst giver 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": \"{{heroId}}\", \"note\": \"Min yndlingshelt!\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 · Tom note giver 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{heroId}}, \"note\": \"   \"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 · Ukendte felter giver 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{heroId}}, \"note\": \"Min yndlingshelt!\", \"extra\": true}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 · Ukendt helt kan ikke gemmes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{missingHeroId}}, \"note\": \"Findes ikke\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 · Forkert Content-Type giver 415",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{heroId}}, \"note\": \"Min yndlingshelt!\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 415\", () => pm.response.to.have.status(415));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 · Ugyldig JSON giver 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\":",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 · Opret favorit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{heroId}}, \"note\": \"  Min yndlingshelt!  \"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Favoritten gemmes med trimmet note\", () => {",
+              "  pm.expect(pm.response.json()).to.deep.equal({",
+              "    id: Number(pm.collectionVariables.get(\"heroId\")),",
+              "    note: \"Min yndlingshelt!\"",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 · Dobbelt favorit giver 409",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": {{heroId}}, \"note\": \"Anden note\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 · Hent favoritter efter oprettelse",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/favorites"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Favoritten findes præcis én gang med sin note\", () => {",
+              "  const favorites = pm.response.json();",
+              "  pm.expect(favorites).to.be.an(\"array\");",
+              "  favorites.forEach(favorite => pm.expect(favorite).to.have.all.keys(\"id\", \"note\"));",
+              "  const matches = favorites.filter(favorite => favorite.id === Number(pm.collectionVariables.get(\"heroId\")));",
+              "  pm.expect(matches).to.deep.equal([{ id: Number(pm.collectionVariables.get(\"heroId\")), note: \"Min yndlingshelt!\" }]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 · Rediger favoritnotens tekst",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/favorites/{{heroId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"note\": \"  Opdateret note fra Postman.  \"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Den opdaterede note returneres\", () => {",
+              "  pm.expect(pm.response.json()).to.deep.equal({",
+              "    id: Number(pm.collectionVariables.get(\"heroId\")),",
+              "    note: \"Opdateret note fra Postman.\"",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 · Hent favoritter efter redigering",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/favorites"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Den opdaterede note er gemt\", () => {",
+              "  const favorite = pm.response.json().find(item => item.id === Number(pm.collectionVariables.get(\"heroId\")));",
+              "  pm.expect(favorite).to.deep.equal({",
+              "    id: Number(pm.collectionVariables.get(\"heroId\")),",
+              "    note: \"Opdateret note fra Postman.\"",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 · Slet favorit og ryd op",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/favorites/{{heroId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "pm.test(\"Svaret har ingen body\", () => pm.expect(pm.response.text()).to.equal(\"\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 · Sletning af ukendt favorit giver 404",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/favorites/{{heroId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+              "pm.test(\"Informativ JSON-fejl\", () => {",
+              "  pm.expect(pm.response.json().error).to.be.a(\"string\").and.not.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

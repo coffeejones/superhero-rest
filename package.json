@@ -1,0 +1,40 @@
+{
+  "name": "superhero-rest",
+  "version": "1.0.0",
+  "description": "REST API med SuperHero API, lokale favoritter og en enkel frontend.",
+  "main": "app.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "jest --runInBand",
+    "test:load": "jest --runInBand tests/concurrency.test.js",
+    "test:postman": "node scripts/run-postman.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "clearMocks": true
+  },
+  "dependencies": {
+    "axios": "^1.21.0",
+    "express": "^5.3.0",
+    "joi": "^18.3.2"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "newman": "^6.2.3",
+    "supertest": "^7.3.2"
+  },
+  "overrides": {
+    "postman-runtime": {
+      "handlebars": "4.7.10"
+    }
+  }
+}
